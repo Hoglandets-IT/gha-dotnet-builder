@@ -74,7 +74,7 @@ runs:
     - name: Set Version
       shell: ${{ inputs.buildShell }}
       run: |
-        echo newver=$(python helpers/set-version.py "${{ inputs.buildVersion }}" "${{ inputs.incrementVersion }}" "${{ inputs.incrementVersionWriteback }}") >> $GITHUB_OUTPUT
+        echo newver=$(python ${{ github.action_path }}/helpers/set-version.py "${{ inputs.buildVersion }}" "${{ inputs.incrementVersion }}" "${{ inputs.incrementVersionWriteback }}") >> $GITHUB_OUTPUT
       id: new-version
 
     - name: Build
@@ -83,7 +83,7 @@ runs:
         echo "Building version ${{ steps.new-version.outputs.newver }}"
         dotnet pack \
           --configuration ${{ inputs.buildConfiguration }} \
-          $(python helpers/isset.py "--include-source" "${{ inputs.includeSource }}") \
+          $(python ${{ github.action_path }}/helpers/isset.py "--include-source" "${{ inputs.includeSource }}") \
           --output ${{ inputs.outputDirectory }} \
           /p:Version=${{ steps.new-version.outputs.newver }} \
           ${{ inputs.buildProject }}
@@ -102,7 +102,7 @@ runs:
       if: inputs.packageReleaseName != ''
       id: check-release-file
       run: |
-        echo release-body=$(python check-release-body.py "${{ inputs.packageReleaseBody }}") > $GITHUB_OUTPUT
+        echo release-body=$(python ${{ github.action_path }}/helpers/check-release-body.py "${{ inputs.packageReleaseBody }}") > $GITHUB_OUTPUT
 
     - name: Create Release for package
       if: inputs.packageReleaseName != 'main'
