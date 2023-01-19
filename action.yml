@@ -2,17 +2,33 @@ name: 'GHA .NET Builder'
 author: 'hoglandets-it/scheibling'
 description: 'Build .NET packages and deploy to nuget feeds or create releases'
 inputs:
-  buildImage:
-    description: 'The container image to use for action'
-    required: false
-    default: "windows-latest"
+  buildShell:
+    description: 'The shell to use for the build commands (powershell/pwsh/bash)'
+    required: true
+    default: "powershell"
   buildProject:
     description: 'The path to the .csproj-file to be built'
     required: true
     default: "${{ github.event.repository.name }}/${{ github.event.repository.name }}.csproj"
   buildVersion:
-    description: 'The version tag to use for the build (default uses the tag from your project file)'
+    description: 'The path to the file containing the current version number (default uses the tag from your project file)'
     required: false
+  incrementVersion:
+    description: "Whether to automatically increment a version (empty or major/minor/patch)"
+    required: false
+    default: "patch"
+  incrementVersionWriteback:
+    description: "Whether to write back the incremented version to the project file"
+    required: false
+    default: "true"
+  writebackName:
+    description: "The name of the user writing back the property"
+    required: false
+    default: "AutoPush"
+  writebackEmail:
+    description: "The email of the user writing back the property"
+    required: false
+    default: "autopush@null"
   buildVersionSuffix:
     description: 'Suffix for the build version to use when packaging'
     required: false
@@ -46,9 +62,67 @@ inputs:
     required: false
     default: 'README.md'
   packageReleaseFiles:
-    description: 'Files that are to be included in the release'
+    description: 'Files that are to be included in the release (one per line)'
     required: false
     default: '*.nupkg'
 runs:
   using: 'composite'
-  steps: []
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Set Version
+      shell: ${{ inputs.buildShell }}
+      run: |
+        echo newver=$(python helpers/set-version.py "${{ inputs.buildVersion }}" "${{ inputs.incrementVersion }}" "${{ inputs.incrementVersionWriteback }}") >> $GITHUB_OUTPUT
+      id: new-version
+
+    - name: Build
+      shell: ${{ inputs.buildShell }}
+      run: |
+        echo "Building version ${{ steps.new-version.outputs.newver }}"
+        dotnet pack \
+          --configuration ${{ inputs.buildConfiguration }} \
+          $(python helpers/isset.py "--include-source" "${{ inputs.includeSource }}") \
+          --output ${{ inputs.outputDirectory }} \
+          /p:Version=${{ steps.new-version.outputs.newver }} \
+          ${{ inputs.buildProject }}
+
+    - name: Publish the new package
+      shell: ${{ inputs.buildShell }}
+      if: inputs.packageFeedUrl != ''
+      run: |
+        dotnet nuget push \
+          ${{ inputs.outputDirectory }}/*.nupkg \
+          --source ${{ inputs.packageFeedUrl }} \
+          --api-key ${{ inputs.packageFeedSecret }}
+    
+    - name: Ensure release file exists
+      shell: ${{ inputs.buildShell }}
+      if: inputs.packageReleaseName != ''
+      id: check-release-file
+      run: |
+        echo release-body=$(python check-release-body.py "${{ inputs.packageReleaseBody }}") > $GITHUB_OUTPUT
+
+    - name: Create Release for package
+      if: inputs.packageReleaseName != 'main'
+      uses: softprops/action-gh-release@v1
+      env:
+        GITHUB_TOKEN: ${{ inputs.packageReleaseToken }}
+      with:
+        name: ${{ inputs.packageReleaseName }}
+        tag_name: ${{ inputs.packageReleaseName }}
+        body_path: ${{ steps.check-release-file.outputs.release-body }}
+        files: ${{ inputs.packageReleaseFiles }}
+    
+    - name: Version number writeback if enabled
+      if: inputs.incrementVersionWriteback == 'true' or inputs.incrementVersionWriteback == 'True'
+      shell: ${{ inputs.buildShell }}
+      run: |
+        echo "Writing back version ${{ steps.new-version.outputs.newver }}"
+        echo ${{ steps.new-version.outputs.newver }} > ${{ inputs.buildVersion }}
+        git config user.email ${{ inputs.writebackEmail }}
+        git config user.name ${{ inputs.writebackName }}
+        git add ${{ inputs.buildVersion }}
+        git commit -m "Version number writeback to ${{ steps.new-version.outputs.newver }}"
+        git push origin ${{ github.ref}}
