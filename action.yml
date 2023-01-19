@@ -79,7 +79,7 @@ runs:
     - name: Set Version
       shell: ${{ inputs.buildShell }}
       run: |
-        echo newver=$(python ${{ github.action_path }}/helpers/set-version.py "${{ inputs.buildVersion }}" "${{ inputs.incrementVersion }}" "${{ inputs.incrementVersionWriteback }}") >> $GITHUB_OUTPUT
+        echo newver=$(python ${{ github.action_path }}/helpers/set-version.py "${{ inputs.buildVersion }}" "${{ inputs.incrementVersion }}" "${{ inputs.buildVersionSuffix }}") >> $GITHUB_OUTPUT
       id: new-version
 
     - name: Build
