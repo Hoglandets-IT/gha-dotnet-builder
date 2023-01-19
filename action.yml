@@ -1,0 +1,54 @@
+name: 'GHA .NET Builder'
+author: 'hoglandets-it/scheibling'
+description: 'Build .NET packages and deploy to nuget feeds or create releases'
+inputs:
+  buildImage:
+    description: 'The container image to use for action'
+    required: false
+    default: "windows-latest"
+  buildProject:
+    description: 'The path to the .csproj-file to be built'
+    required: true
+    default: "${{ github.event.repository.name }}/${{ github.event.repository.name }}.csproj"
+  buildVersion:
+    description: 'The version tag to use for the build (default uses the tag from your project file)'
+    required: false
+  buildVersionSuffix:
+    description: 'Suffix for the build version to use when packaging'
+    required: false
+  buildConfiguration:
+    description: "The build configuration for dotnet pack"
+    required: false
+    default: "Release"
+  includeSource:
+    description: 'Whether to include the application source in the package'
+    required: false
+    default: "true"
+  outputDirectory:
+    description: 'Where to put the .nupkg-files from the build'
+    required: false
+    default: "."
+  packageFeedUrl:
+    description: 'If you want to publish the package, specify the target feed here'
+    required: false
+  packageFeedSecret:
+    description: 'The API key for the target feed needed to upload the package'
+    required: false
+  packageReleaseToken:
+    description: 'The token to use to create/manage the release'
+    required: false
+    default: "${{ secrets.GITHUB_TOKEN }}"
+  packageReleaseName:
+    description: 'To create a release file, specify a name for the relese here'
+    required: false
+  packageReleaseBody:
+    description: 'The body for the release, either string/multiline-string or the path to a file in the repo reltive to the root'
+    required: false
+    default: 'README.md'
+  packageReleaseFiles:
+    description: 'Files that are to be included in the release'
+    required: false
+    default: '*.nupkg'
+runs:
+  using: 'composite'
+  steps: []
