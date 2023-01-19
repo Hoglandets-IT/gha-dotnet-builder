@@ -53,7 +53,7 @@ inputs:
   packageReleaseToken:
     description: 'The token to use to create/manage the release'
     required: false
-    default: "${{ secrets.GITHUB_TOKEN }}"
+    default: ${{ github.token }}
   packageReleaseName:
     description: 'To create a release file, specify a name for the relese here'
     required: false
@@ -125,4 +125,4 @@ runs:
         git config user.name ${{ inputs.writebackName }}
         git add ${{ inputs.buildVersion }}
         git commit -m "Version number writeback to ${{ steps.new-version.outputs.newver }}"
-        git push origin ${{ github.ref}}
+        git push origin ${{ github.ref }}
