@@ -116,7 +116,7 @@ runs:
         files: ${{ inputs.packageReleaseFiles }}
     
     - name: Version number writeback if enabled
-      if: inputs.incrementVersionWriteback == 'true' or inputs.incrementVersionWriteback == 'True'
+      if: ${{ inputs.incrementVersionWriteback == 'true' || inputs.incrementVersionWriteback == 'True' }}
       shell: ${{ inputs.buildShell }}
       run: |
         echo "Writing back version ${{ steps.new-version.outputs.newver }}"
