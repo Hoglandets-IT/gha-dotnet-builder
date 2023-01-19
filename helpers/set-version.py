@@ -14,7 +14,8 @@ try:
             with open(sys.argv[1], 'r') as f:
                 params['version'] = f.read().strip()
         else:
-            params['version'] = sys.argv[1]
+            params['version'] = sys.argv[1].replace('release-', '').replace('v', '').replace('V', '')
+
         if alen > 2:
             params['increment'] = sys.argv[2]
             if alen > 3:
