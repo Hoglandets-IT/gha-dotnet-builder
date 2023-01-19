@@ -50,6 +50,10 @@ inputs:
   packageFeedSecret:
     description: 'The API key for the target feed needed to upload the package'
     required: false
+  packageRelease:
+    description: 'Create a release for the package (true/false)'
+    required: false
+    default: "false"
   packageReleaseToken:
     description: 'The token to use to create/manage the release'
     required: false
@@ -57,6 +61,7 @@ inputs:
   packageReleaseName:
     description: 'To create a release file, specify a name for the relese here'
     required: false
+    default: ${{ github.ref }}
   packageReleaseBody:
     description: 'The body for the release, either string/multiline-string or the path to a file in the repo reltive to the root'
     required: false
@@ -106,7 +111,7 @@ runs:
         echo release-body=$(python ${{ github.action_path }}/helpers/check-release-body.py "${{ inputs.packageReleaseBody }}") > $GITHUB_OUTPUT
 
     - name: Create Release for package
-      if: inputs.packageReleaseName != 'main'
+      if: inputs.packageRelease == 'true' || inputs.packageRelease == 'True'
       uses: softprops/action-gh-release@v1
       env:
         GITHUB_TOKEN: ${{ inputs.packageReleaseToken }}
