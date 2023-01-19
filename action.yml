@@ -80,7 +80,8 @@ runs:
     - name: Build
       shell: ${{ inputs.buildShell }}
       run: |
-        echo "Building version ${{ steps.new-version.outputs.newver }}"
+        echo "Building version ${{ steps.new-version.outputs.newver }}" && \
+        dotnet restore ${{ inputs.buildProject }} && \
         dotnet pack \
           --configuration ${{ inputs.buildConfiguration }} \
           $(python ${{ github.action_path }}/helpers/isset.py "--include-source" "${{ inputs.includeSource }}") \
