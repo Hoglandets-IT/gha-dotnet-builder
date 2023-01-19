@@ -10,12 +10,18 @@ try:
     alen = len(sys.argv)
 
     if alen > 1:
-        with open(sys.argv[1], 'r') as f:
-            params['version'] = f.read().strip()
+        if os.path.isfile(sys.argv[1]):
+            with open(sys.argv[1], 'r') as f:
+                params['version'] = f.read().strip()
+        else:
+            params['version'] = sys.argv[1]
         if alen > 2:
             params['increment'] = sys.argv[2]
             if alen > 3:
                 params['suffix'] = sys.argv[3]
+
+    if "-" in params['version']:
+        params['version'] = params['version'].split('-')[0]
 
     split = params['version'].split('.')
 
@@ -33,4 +39,6 @@ except:
     print('Error: Invalid arguments')
     print('Ver: ' + params['version'])
     print('Split: ' + ','.join(split))
+    sys.exit(1)
+
 print('.'.join(split) + (('-' + params['suffix']) if params['suffix'] not in ["", " ", None, False] else ''))
